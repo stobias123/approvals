@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/loopfz/gadgeto/tonic"
@@ -14,16 +13,14 @@ import (
 )
 
 type ApprovalsController struct {
-	mqttClient mqtt.Client
-	sm         *managers.SlackManager
-	am         *managers.ApprovalManager
+	sm *managers.SlackManager
+	am *managers.ApprovalManager
 }
 
-func NewApprovalsController(mqttClient mqtt.Client, sm *managers.SlackManager, am *managers.ApprovalManager) *ApprovalsController {
+func NewApprovalsController(sm *managers.SlackManager, am *managers.ApprovalManager) *ApprovalsController {
 	return &ApprovalsController{
-		mqttClient: mqttClient,
-		sm:         sm,
-		am:         am,
+		sm: sm,
+		am: am,
 	}
 }
 
@@ -32,6 +29,7 @@ type RequestApprovalPayload struct {
 
 func (ac *ApprovalsController) RegisterHandlers(r *gin.Engine) {
 	r.POST("/:org_id/approvals", tonic.Handler(ac.HandleApprovalCreate, http.StatusOK))
+	r.POST("/:org_id/approvals/:approval_id/approve", tonic.Handler(ac.HandleApprovalCreate, http.StatusOK))
 	r.GET("/:org_id/approvals", tonic.Handler(ac.HandleApprovalList, http.StatusOK))
 }
 
