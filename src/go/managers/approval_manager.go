@@ -43,6 +43,19 @@ func (am *ApprovalManager) GetApprovals(orgID string) ([]repositories.Approval, 
 	return am.approvalRepository.GetApprovals(orgID)
 }
 
+func (am *ApprovalManager) GetApproval(orgID string, approvalID string) (*repositories.Approval, error) {
+	approvals, err := am.approvalRepository.GetApprovals(orgID)
+	if err != nil {
+		return nil, err
+	}
+	for _, approval := range approvals {
+		if approval.ID == approvalID {
+			return &approval, nil
+		}
+	}
+	return nil, nil
+}
+
 func toJson(value interface{}) string {
 	bytes, err := json.Marshal(value)
 	if err != nil {

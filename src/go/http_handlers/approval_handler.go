@@ -29,8 +29,22 @@ type RequestApprovalPayload struct {
 
 func (ac *ApprovalsController) RegisterHandlers(r *gin.Engine) {
 	r.POST("/:org_id/approvals", tonic.Handler(ac.HandleApprovalCreate, http.StatusOK))
-	r.POST("/:org_id/approvals/:approval_id/approve", tonic.Handler(ac.HandleApprovalCreate, http.StatusOK))
+	r.POST("/:org_id/approvals/:approval_id/approve", tonic.Handler(ac.HandleApprovalApprove, http.StatusOK))
+	r.GET("/:org_id/approvals/:approval_id", tonic.Handler(ac.GetApproval, http.StatusOK))
 	r.GET("/:org_id/approvals", tonic.Handler(ac.HandleApprovalList, http.StatusOK))
+}
+
+func (ac *ApprovalsController) GetApproval(c *gin.Context) (*gin.H, error) {
+	orgID := c.Param("org_id")
+	approvalID := c.Param("approval_id")
+
+	// fetch the approval and return it
+	approval, err := ac.am.GetApproval(orgID, approvalID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gin.H{"approval": approval}, nil
 }
 
 func (ac *ApprovalsController) HandleApprovalCreate(c *gin.Context, payload *RequestApprovalPayload) (*gin.H, error) {
@@ -43,7 +57,7 @@ func (ac *ApprovalsController) HandleApprovalCreate(c *gin.Context, payload *Req
 
 	ac.am.RequestApproval(orgID, approvalID)
 
-	return &gin.H{"message": "Webhook received"}, nil
+	return &gin.H{"id": approvalID}, nil
 }
 
 func (act *ApprovalsController) HandleApprovalList(c *gin.Context) (*gin.H, error) {
@@ -54,6 +68,17 @@ func (act *ApprovalsController) HandleApprovalList(c *gin.Context) (*gin.H, erro
 	}
 
 	return &gin.H{"approvals": approvals}, nil
+}
+
+func (ac *ApprovalsController) HandleApprovalApprove(c *gin.Context) (*gin.H, error) {
+	orgID := c.Param("org_id")
+	approvalID := c.Param("approval_id")
+
+	fmt.Printf("Received approval for org_id: %s, approval_id: %s\n", orgID, approvalID)
+
+	ac.am.Approve(orgID, approvalID)
+
+	return &gin.H{"message": "Approval received"}, nil
 }
 
 func toJson(value interface{}) string {

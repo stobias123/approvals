@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kelseyhightower/envconfig"
+	logrus "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 )
@@ -24,12 +24,11 @@ type SlackManager struct {
 }
 
 func NewSlackManager(am *ApprovalManager) *SlackManager {
-	var config SlackConfig
-	err := envconfig.Process("slack", &config)
-	fmt.Println(config)
-	if err != nil {
-		log.Fatal(err.Error())
+	config := SlackConfig{
+		AppToken: os.Getenv("SLACK_APP_TOKEN"),
+		BotToken: os.Getenv("SLACK_BOT_TOKEN"),
 	}
+	logrus.Infof("Slack config: %v", config)
 
 	api := slack.New(
 		config.BotToken,
@@ -69,7 +68,10 @@ func (sm *SlackManager) Run(ctx context.Context) {
 
 func (sm *SlackManager) SendApprovalButton(channel string, orgID string, requestID string) {
 	approvalBlock := sm.getApprovalBlock(sm.client, orgID, requestID)
-	sm.client.SendMessage(channel, slack.MsgOptionBlocks(approvalBlock...))
+	_, _, _, error := sm.client.SendMessage(channel, slack.MsgOptionBlocks(approvalBlock...))
+	if error != nil {
+		log.Printf("failed posting message: %v", error)
+	}
 }
 
 func (sm *SlackManager) HandleApprovalBlockClick(evt *socketmode.Event, client *socketmode.Client) {

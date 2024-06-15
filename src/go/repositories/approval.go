@@ -1,6 +1,10 @@
 package repositories
 
-import "fmt"
+import (
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
+)
 
 type ApprovalStatus string
 
@@ -48,6 +52,7 @@ func (ar *ApprovalRepositoryInMemory) UpdateApprovalStatus(orgID string, approva
 		return fmt.Errorf("approval ID %s not found for organization ID %s", approvalID, orgID)
 	} else {
 		approval.Status = status
+		log.Infof("Updated approval status for org_id: %s, approval_id: %s, status: %s", orgID, approvalID, status)
 		ar.approvalMap[orgID][approvalID] = approval
 	}
 	return nil
@@ -62,5 +67,13 @@ func (ar *ApprovalRepositoryInMemory) GetApprovals(orgID string) ([]Approval, er
 		return approvals, nil
 	}
 	return nil, fmt.Errorf("no approvals found for organization ID %s", orgID)
+}
 
+func (ar *ApprovalRepositoryInMemory) GetApproval(orgID string, approvalID string) (*Approval, error) {
+	if orgApprovals, ok := ar.approvalMap[orgID]; ok {
+		if approval, ok := orgApprovals[approvalID]; ok {
+			return &approval, nil
+		}
+	}
+	return nil, fmt.Errorf("approval ID %s not found for organization ID %s", approvalID, orgID)
 }
