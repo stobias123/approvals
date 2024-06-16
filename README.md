@@ -105,7 +105,7 @@ Run the client:
 ### Example
 
 ```sh
-./approval-client --org_id my_org --wait_time 1m --base_url http://localhost:8080
+./approval-client --org_id my_org --wait_time 15m --base_url https://approvals.fly.dev --message "*This service is about to deploy. You have 5 minutes to stop deploy if you do not want it.*'
 ```
 
 ## Configuration
