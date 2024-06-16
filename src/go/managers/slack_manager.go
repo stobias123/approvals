@@ -15,18 +15,21 @@ import (
 type SlackConfig struct {
 	AppToken string
 	BotToken string
+	Channel  string
 }
 
 type SlackManager struct {
 	client            *socketmode.Client
 	socketmodeHandler *socketmode.SocketmodeHandler
 	approvalManager   *ApprovalManager
+	config            SlackConfig
 }
 
 func NewSlackManager(am *ApprovalManager) *SlackManager {
 	config := SlackConfig{
 		AppToken: os.Getenv("SLACK_APP_TOKEN"),
 		BotToken: os.Getenv("SLACK_BOT_TOKEN"),
+		Channel:  os.Getenv("SLACK_CHANNEL"),
 	}
 	logrus.Infof("Slack config: %v", config)
 
@@ -49,6 +52,7 @@ func NewSlackManager(am *ApprovalManager) *SlackManager {
 		client:            client,
 		socketmodeHandler: socketmodeHandler,
 		approvalManager:   am,
+		config:            config,
 	}
 }
 
@@ -66,9 +70,9 @@ func (sm *SlackManager) Run(ctx context.Context) {
 	sm.socketmodeHandler.RunEventLoopContext(ctx)
 }
 
-func (sm *SlackManager) SendApprovalButton(channel string, orgID string, requestID string) {
-	approvalBlock := sm.getApprovalBlock(sm.client, orgID, requestID)
-	_, _, _, error := sm.client.SendMessage(channel, slack.MsgOptionBlocks(approvalBlock...))
+func (sm *SlackManager) SendApprovalButton(message string, orgID string, requestID string) {
+	approvalBlock := sm.getApprovalBlock(message, orgID, requestID)
+	_, _, _, error := sm.client.SendMessage(sm.config.Channel, slack.MsgOptionBlocks(approvalBlock...))
 	if error != nil {
 		log.Printf("failed posting message: %v", error)
 	}
@@ -96,13 +100,14 @@ func (sm *SlackManager) HandleApprovalBlockClick(evt *socketmode.Event, client *
 	}
 }
 
-func (sm *SlackManager) getApprovalBlock(client *socketmode.Client, message string, orgID string, requestID string) []slack.Block {
+func (sm *SlackManager) getApprovalBlock(message string, orgID string, requestID string) []slack.Block {
 
 	approvalValue := fmt.Sprintf("approve_%s_%s", orgID, requestID)
 	denyValue := fmt.Sprintf("deny_%s_%s", orgID, requestID)
 
 	// Header Section
-	headerText := slack.NewTextBlockObject("mrkdwn", "*This service is about to deploy. You have 5 minutes to stop deploy if you do not want it.*", false, false)
+	logrus.Infof("Creating approval block with message: %s", message)
+	headerText := slack.NewTextBlockObject("mrkdwn", message, false, false)
 	headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
 	// Approve and Deny Buttons

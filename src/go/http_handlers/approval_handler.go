@@ -12,24 +12,32 @@ import (
 	"github.com/stobias123/slack_button/managers"
 )
 
-type ApprovalsController struct {
-	sm *managers.SlackManager
-	am *managers.ApprovalManager
+type ApprovalsControllerConfig struct {
+	Url string
 }
 
-func NewApprovalsController(sm *managers.SlackManager, am *managers.ApprovalManager) *ApprovalsController {
+type ApprovalsController struct {
+	config *ApprovalsControllerConfig
+	sm     *managers.SlackManager
+	am     *managers.ApprovalManager
+}
+
+func NewApprovalsController(config *ApprovalsControllerConfig, sm *managers.SlackManager, am *managers.ApprovalManager) *ApprovalsController {
 	return &ApprovalsController{
-		sm: sm,
-		am: am,
+		config: config,
+		sm:     sm,
+		am:     am,
 	}
 }
 
 type RequestApprovalPayload struct {
+	Message string `json:"message"`
 }
 
 func (ac *ApprovalsController) RegisterHandlers(r *gin.Engine) {
 	r.POST("/:org_id/approvals", tonic.Handler(ac.HandleApprovalCreate, http.StatusOK))
 	r.POST("/:org_id/approvals/:approval_id/approve", tonic.Handler(ac.HandleApprovalApprove, http.StatusOK))
+	r.POST("/:org_id/approvals/:approval_id/reject", tonic.Handler(ac.HandleApprovalReject, http.StatusOK))
 	r.GET("/:org_id/approvals/:approval_id", tonic.Handler(ac.GetApproval, http.StatusOK))
 	r.GET("/:org_id/approvals", tonic.Handler(ac.HandleApprovalList, http.StatusOK))
 }
@@ -53,7 +61,7 @@ func (ac *ApprovalsController) HandleApprovalCreate(c *gin.Context, payload *Req
 
 	fmt.Printf("Received webhook for org_id: %s\n", orgID)
 	fmt.Println("Payload:", toJson(payload))
-	ac.sm.SendApprovalButton("#test", orgID, approvalID)
+	ac.sm.SendApprovalButton(payload.Message, orgID, approvalID)
 
 	ac.am.RequestApproval(orgID, approvalID)
 
@@ -68,6 +76,17 @@ func (act *ApprovalsController) HandleApprovalList(c *gin.Context) (*gin.H, erro
 	}
 
 	return &gin.H{"approvals": approvals}, nil
+}
+
+func (ac *ApprovalsController) HandleApprovalReject(c *gin.Context) (*gin.H, error) {
+	orgID := c.Param("org_id")
+	approvalID := c.Param("approval_id")
+
+	fmt.Printf("Received rejection for org_id: %s, approval_id: %s\n", orgID, approvalID)
+
+	ac.am.Reject(orgID, approvalID)
+
+	return &gin.H{"message": "Approval rejected"}, nil
 }
 
 func (ac *ApprovalsController) HandleApprovalApprove(c *gin.Context) (*gin.H, error) {

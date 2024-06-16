@@ -18,7 +18,11 @@ type Server struct {
 func NewServer(sm *managers.SlackManager, am *managers.ApprovalManager) *Server {
 	router := gin.Default()
 
-	approvalsController := http_handlers.NewApprovalsController(sm, am)
+	config := &http_handlers.ApprovalsControllerConfig{
+		Url: "https://approvals.fly.dev",
+	}
+
+	approvalsController := http_handlers.NewApprovalsController(config, sm, am)
 	approvalsController.RegisterHandlers(router)
 
 	return &Server{
