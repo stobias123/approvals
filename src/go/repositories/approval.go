@@ -52,7 +52,7 @@ func (ar *ApprovalRepositoryInMemory) UpdateApprovalStatus(orgID string, approva
 		return fmt.Errorf("approval ID %s not found for organization ID %s", approvalID, orgID)
 	} else {
 		approval.Status = status
-		log.Infof("Updated approval status for org_id: %s, approval_id: %s, status: %s", orgID, approvalID, status)
+		log.Debugf("Updated approval status for org_id: %s, approval_id: %s, status: %s", orgID, approvalID, status)
 		ar.approvalMap[orgID][approvalID] = approval
 	}
 	return nil

@@ -41,6 +41,8 @@ func main() {
 
 	flag.Parse()
 
+	exitCode := 0
+
 	totalWaitDuration, err := time.ParseDuration(*waitTime)
 	if err != nil {
 		log.Fatalf("Invalid wait time duration: %v", err)
@@ -51,25 +53,20 @@ func main() {
 		log.Fatalf("Failed to create approval: %v", err)
 	}
 
-	fmt.Printf("Approval created with ID: %s\n", approvalID)
-
 	status, err := waitForApproval(*baseURL, *orgID, approvalID, totalWaitDuration)
 	outputStatus := OutputStatus{
 		ID:     approvalID,
 		Status: status,
 	}
-
+	if err != nil {
+		exitCode = 1
+	}
 	output, err := json.Marshal(outputStatus)
 	if err != nil {
 		log.Fatalf("Failed to marshal output status: %v", err)
 	}
 	fmt.Println(string(output))
-
-	if err != nil {
-		os.Exit(1)
-	}
-
-	os.Exit(0)
+	os.Exit(exitCode)
 }
 
 func createApproval(baseURL, orgID, message string) (string, error) {
@@ -135,9 +132,10 @@ func waitForApproval(baseURL, orgID, approvalID string, totalWaitDuration time.D
 				return "", fmt.Errorf("failed to decode response: %w", err)
 			}
 
+			log.Info(approvalStatus.Approval.Status)
 			if approvalStatus.Approval.Status == "approved" {
 				return "approved", nil
-			} else if approvalStatus.Approval.Status == "denied" {
+			} else if approvalStatus.Approval.Status == "rejected" {
 				return "rejected", fmt.Errorf("denied: approval %s has been denied", approvalID)
 			}
 		}

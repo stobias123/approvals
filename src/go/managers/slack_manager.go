@@ -31,7 +31,7 @@ func NewSlackManager(am *ApprovalManager) *SlackManager {
 		BotToken: os.Getenv("SLACK_BOT_TOKEN"),
 		Channel:  os.Getenv("SLACK_CHANNEL"),
 	}
-	logrus.Infof("Slack config: %v", config)
+	logrus.Debugf("Slack config: %v", config)
 
 	api := slack.New(
 		config.BotToken,
@@ -90,13 +90,24 @@ func (sm *SlackManager) HandleApprovalBlockClick(evt *socketmode.Event, client *
 		if strings.Contains(action.Value, "approve") {
 			orgID := strings.Split(action.Value, "_")[1]
 			approvalID := strings.Split(action.Value, "_")[2]
-			logrus.Infof("Approving deploy for org_id: %s, approval_id: %s", orgID, approvalID)
+			logrus.Debugf("Approving deploy for org_id: %s, approval_id: %s", orgID, approvalID)
 			sm.approvalManager.Approve(orgID, approvalID)
+			sm.UpdateMessage(callback.Channel.ID, callback.Message.Msg.Timestamp, "Deploy approved")
+		}
+		if strings.Contains(action.Value, "deny") {
+			orgID := strings.Split(action.Value, "_")[1]
+			approvalID := strings.Split(action.Value, "_")[2]
+			logrus.Infof("Denying deploy for org_id: %s, approval_id: %s", orgID, approvalID)
+			sm.approvalManager.Reject(orgID, approvalID)
+			sm.UpdateMessage(callback.Channel.ID, callback.Message.Msg.Timestamp, "Deploy denied")
 		}
 	}
-	_, _, _, err := client.Client.UpdateMessage(callback.Channel.ID, callback.Message.Msg.Timestamp, slack.MsgOptionText("Deploy approved", false))
+}
+
+func (sm *SlackManager) UpdateMessage(channel string, timestamp string, text string) {
+	_, _, _, err := sm.client.Client.UpdateMessage(channel, timestamp, slack.MsgOptionText(text, false))
 	if err != nil {
-		client.Debugf("failed posting message: %v", err)
+		sm.client.Debugf("failed posting message: %v", err)
 	}
 }
 
@@ -106,7 +117,7 @@ func (sm *SlackManager) getApprovalBlock(message string, orgID string, requestID
 	denyValue := fmt.Sprintf("deny_%s_%s", orgID, requestID)
 
 	// Header Section
-	logrus.Infof("Creating approval block with message: %s", message)
+	logrus.Debugf("Creating approval block with message: %s", message)
 	headerText := slack.NewTextBlockObject("mrkdwn", message, false, false)
 	headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
