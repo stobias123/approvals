@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ type ApprovalStatus struct {
 }
 
 func main() {
-	orgID := flag.String("org_id", "example_org", "Organization ID")
+	orgID := flag.String("org_id", "example-org", "Organization ID")
 	waitTime := flag.String("wait_time", "30s", "Total wait time for approval status (e.g., 30s, 1m)")
 	baseURL := flag.String("base_url", "http://localhost:8080", "Base URL of the approval service")
 
@@ -48,10 +49,19 @@ func main() {
 
 	err = waitForApproval(*baseURL, *orgID, approvalID, totalWaitDuration)
 	if err != nil {
-		log.Fatalf("Failed to wait for approval: %v", err)
+		if err.Error() == fmt.Sprintf("timeout: approval %s not approved within %s", approvalID, totalWaitDuration) {
+			log.Error(err)
+			os.Exit(2)
+		} else if err.Error() == fmt.Sprintf("denied: approval %s has been denied", approvalID) {
+			log.Error(err)
+			os.Exit(1)
+		} else {
+			log.Fatalf("Failed to wait for approval: %v", err)
+		}
 	}
 
 	fmt.Printf("Approval %s has been approved\n", approvalID)
+	os.Exit(0)
 }
 
 func createApproval(baseURL, orgID string) (string, error) {
@@ -97,7 +107,7 @@ func waitForApproval(baseURL, orgID, approvalID string, totalWaitDuration time.D
 	for {
 		select {
 		case <-timeout:
-			return fmt.Errorf("approval %s not approved within %s", approvalID, totalWaitDuration)
+			return fmt.Errorf("timeout: approval %s not approved within %s", approvalID, totalWaitDuration)
 		case <-ticker.C:
 			log.Infof("Checking approval status for approval ID: %s", approvalID)
 			resp, err := http.Get(url)
@@ -119,6 +129,8 @@ func waitForApproval(baseURL, orgID, approvalID string, totalWaitDuration time.D
 
 			if approvalStatus.Approval.Status == "approved" {
 				return nil
+			} else if approvalStatus.Approval.Status == "denied" {
+				return fmt.Errorf("denied: approval %s has been denied", approvalID)
 			}
 		}
 	}

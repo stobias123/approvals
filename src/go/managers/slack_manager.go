@@ -86,6 +86,7 @@ func (sm *SlackManager) HandleApprovalBlockClick(evt *socketmode.Event, client *
 		if strings.Contains(action.Value, "approve") {
 			orgID := strings.Split(action.Value, "_")[1]
 			approvalID := strings.Split(action.Value, "_")[2]
+			logrus.Infof("Approving deploy for org_id: %s, approval_id: %s", orgID, approvalID)
 			sm.approvalManager.Approve(orgID, approvalID)
 		}
 	}
@@ -95,7 +96,7 @@ func (sm *SlackManager) HandleApprovalBlockClick(evt *socketmode.Event, client *
 	}
 }
 
-func (sm *SlackManager) getApprovalBlock(client *socketmode.Client, orgID string, requestID string) []slack.Block {
+func (sm *SlackManager) getApprovalBlock(client *socketmode.Client, message string, orgID string, requestID string) []slack.Block {
 
 	approvalValue := fmt.Sprintf("approve_%s_%s", orgID, requestID)
 	denyValue := fmt.Sprintf("deny_%s_%s", orgID, requestID)

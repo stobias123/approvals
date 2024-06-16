@@ -4,12 +4,12 @@
     "type": "block_actions",
     "user": {
       "id": "U11KX9S23",
-      "username": "stobias123",
-      "name": "stobias123",
-      "team_id": "T11L8FKL2"
+      "username": "someguy123",
+      "name": "someguy123",
+      "team_id": "T11L2FSK2"
     },
-    "api_app_id": "A0543MN0275",
-    "token": "3bLIV21RpNhtET0QNLY2N0xo",
+    "api_app_id": "A05433344275",
+    "token": "349494",
     "container": {
       "type": "message",
       "message_ts": "1707420818.622559",
@@ -17,17 +17,23 @@
       "is_ephemeral": false
     },
     "trigger_id": "6607252305989.35688529682.df2f2076bcf341a6958b852d1235f3a8",
-    "team": { "id": "T11L8FKL2", "domain": "tobiasclan" },
+    "team": {
+      "id": "T11L8FMD2",
+      "domain": "foobarclan"
+    },
     "enterprise": null,
     "is_enterprise_install": false,
-    "channel": { "id": "C0543SV0FAN", "name": "test" },
+    "channel": {
+      "id": "C0543SV0FAN",
+      "name": "test"
+    },
     "message": {
-      "bot_id": "B053X7ZPWSJ",
+      "bot_id": "B053BMDGWSJ",
       "type": "message",
       "text": "*This service is about to deploy. You have 5 minutes to stop deploy if you do not want it.* Approve button Deny button",
       "user": "U0540TJRL4D",
       "ts": "1707420818.622559",
-      "app_id": "A0543MN0275",
+      "app_id": "A0JDMDDMF275",
       "blocks": [
         {
           "type": "section",
@@ -55,7 +61,11 @@
             {
               "type": "button",
               "action_id": "a5QsQ",
-              "text": { "type": "plain_text", "text": "Deny", "emoji": true },
+              "text": {
+                "type": "plain_text",
+                "text": "Deny",
+                "emoji": true
+              },
               "value": "deny"
             }
           ]
@@ -63,13 +73,19 @@
       ],
       "team": "T11L8FKL2"
     },
-    "state": { "values": {} },
-    "response_url": "https://hooks.slack.com/actions/T11L8FKL2/6622829075633/Cp4YYruIEAF344bu1DfL7i3Q",
+    "state": {
+      "values": {}
+    },
+    "response_url": "https://hooks.slack.com/actions/T11L8FKL2/6622829075633/Cp4YYrukeifj344bu1DfL7i3Q",
     "actions": [
       {
         "action_id": "Iq6gS",
         "block_id": "Niuxt",
-        "text": { "type": "plain_text", "text": "Approve", "emoji": true },
+        "text": {
+          "type": "plain_text",
+          "text": "Approve",
+          "emoji": true
+        },
         "value": "approve",
         "type": "button",
         "action_ts": "1707420823.052263"
